@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
+import {useDebounce} from 'react-use'
 import Search from './Search'
 import Spinner from './Spinner';
 import MovieCard from './MovieCard';
+import { updateSearchCount } from '../appwrite';
 
 const API_BASE_URL = 'https://api.themoviedb.org/3';
 const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
@@ -19,13 +21,16 @@ const App = () => {
   const [errorMsg,setErrorMsg] = useState('');
   const [moviesList,setMoviesList] = useState([]);
   const [loading,setLoading] = useState(false);
+  const [searchDebounce,setSearchDebounce] = useState('')
 
-  const fetchMovies = async ()=>{
+  useDebounce(()=>setSearchDebounce(search) ,1000,[search])
+
+  const fetchMovies = async (query ='')=>{
     setLoading(true);
     setErrorMsg('');
 
     try{
-      const endpoint = `${API_BASE_URL}/discover/movie?sort_by=popularity.desc`;
+      const endpoint =  query ? `${API_BASE_URL}/search/movie?query=${encodeURI(query)}` : `${API_BASE_URL}/discover/movie?sort_by=popularity.desc`;
       const response = await fetch(endpoint,API_OPTIONS);
       if(!response.ok){
         throw new error("Failed to fetch Movies from API")
@@ -38,6 +43,11 @@ const App = () => {
         return;
       }
       setMoviesList(data.results || []);
+
+      if(query && data.results.length > 0) {
+        await updateSearchCount(query, data.results[0]);
+      }
+      
     }
     catch(error){
       console.log(`Error in fetching Movies: ${error}`);
@@ -49,8 +59,8 @@ const App = () => {
   }
 
   useEffect(()=>{
-    fetchMovies();
-  },[]);
+    fetchMovies(searchDebounce);
+  },[searchDebounce]);
 
   return (
     <main>
@@ -68,7 +78,7 @@ const App = () => {
           {loading ? (
             <Spinner /> 
           ) : errorMsg ? (
-          <p className='text-red-500'>{error}</p>
+          <p className='text-red-500'>{errorMSg}</p>
           ) : (
             <ul>
               {moviesList.map((movie)=>(
