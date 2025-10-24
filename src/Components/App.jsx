@@ -3,7 +3,7 @@ import {useDebounce} from 'react-use'
 import Search from './Search'
 import Spinner from './Spinner';
 import MovieCard from './MovieCard';
-import { updateSearchCount } from '../appwrite';
+import { getTrendingMovies, updateSearchCount } from '../appwrite';
 
 const API_BASE_URL = 'https://api.themoviedb.org/3';
 const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
@@ -20,6 +20,7 @@ const App = () => {
   const [search,setSearch] = useState('');
   const [errorMsg,setErrorMsg] = useState('');
   const [moviesList,setMoviesList] = useState([]);
+  const [trending,setTrending] = useState([]);
   const [loading,setLoading] = useState(false);
   const [searchDebounce,setSearchDebounce] = useState('')
 
@@ -50,7 +51,7 @@ const App = () => {
       
     }
     catch(error){
-      console.log(`Error in fetching Movies: ${error}`);
+      console.error(`Error in fetching Movies: ${error}`);
       setErrorMsg('Error Fetching Movies. Please try again later');
     }
     finally{
@@ -58,9 +59,22 @@ const App = () => {
     }
   }
 
+  const loadTrend = async ()=>{
+    try {
+      const trend = await getTrendingMovies();
+      setTrending(trend);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
   useEffect(()=>{
     fetchMovies(searchDebounce);
   },[searchDebounce]);
+
+  useEffect(()=>{
+    loadTrend();
+  },[])
 
   return (
     <main>
@@ -73,8 +87,22 @@ const App = () => {
           <Search search={search} setSearch={setSearch}/>
         </header>
 
+        {trending.length > 0 && (
+          <section className='trending'>
+              <h2>Trending Movies</h2>
+              <ul>
+                {trending.map((movie,index)=>(
+                  <li key={movie.$id}>
+                    <p>{index + 1}</p>
+                  <img src={movie.poster_url} alt={movie.title} />
+                  </li>
+                ))}
+              </ul>
+          </section>
+        )}
+
         <section className='all-movies'>
-          <h2 className='mt-[40px]'>All Movies</h2>
+          <h2>All Movies</h2>
           {loading ? (
             <Spinner /> 
           ) : errorMsg ? (
