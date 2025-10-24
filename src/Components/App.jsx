@@ -34,7 +34,7 @@ const App = () => {
       const endpoint =  query ? `${API_BASE_URL}/search/movie?query=${encodeURI(query)}` : `${API_BASE_URL}/discover/movie?sort_by=popularity.desc`;
       const response = await fetch(endpoint,API_OPTIONS);
       if(!response.ok){
-        throw new error("Failed to fetch Movies from API")
+        throw new Error("Failed to fetch Movies from API")
       }
       const data = await response.json();
       
