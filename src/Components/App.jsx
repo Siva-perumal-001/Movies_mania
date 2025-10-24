@@ -106,7 +106,7 @@ const App = () => {
           {loading ? (
             <Spinner /> 
           ) : errorMsg ? (
-          <p className='text-red-500'>{errorMSg}</p>
+          <p className='text-red-500'>{errorMsg}</p>
           ) : (
             <ul>
               {moviesList.map((movie)=>(
